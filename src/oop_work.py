@@ -5,7 +5,8 @@ class Product:
     """
     Представляет товар в магазине.
     """
-    def __init__(self, name, description, price, quantity):
+
+    def __init__(self, name: str, description: str, price: float, quantity: int):
         """
         Инициализирует новый объект Product.
 
@@ -25,7 +26,8 @@ class Category:
     """
     Представляет категорию товаров.
     """
-    def __init__(self, name, description):
+
+    def __init__(self, name: str, description: str):
         """
         Инициализирует новый объект Category.
 
@@ -35,9 +37,10 @@ class Category:
         """
         self.name = name
         self.description = description
-        self.products = []  # Список товаров в категории
+        self.products: list[Product] = []  # Список товаров в категории
 
-def load_data_from_json(filename="data/products.json"):
+
+def load_data_from_json(filename: str = "data/products.json") -> list[Category]:
     """
     Функция для загрузки данных о категориях и товарах из JSON-файла,
     обрабатывая возможные ошибки.
@@ -50,7 +53,7 @@ def load_data_from_json(filename="data/products.json"):
     """
     categories = []
     try:
-        with open(filename, 'r', encoding='utf-8') as f:
+        with open(filename, "r", encoding="utf-8") as f:
             data = json.load(f)
     except FileNotFoundError:
         print(f"Ошибка: Файл {filename} не найден.")
@@ -63,12 +66,19 @@ def load_data_from_json(filename="data/products.json"):
         return []
 
     for category_data in data["categories"]:  # Перебираем категории
-            category = Category(category_data["name"], category_data["description"])  # Создаем объект Category
-            for product_data in category_data["products"]:  # Перебираем продукты в категории
-                product = Product(product_data["name"], product_data["description"],
-                                    product_data["price"], product_data["quantity"])  # Создаем объект Product
+        category = Category(
+            category_data["name"], category_data["description"]
+        )  # Создаем объект Category
+        for product_data in category_data[
+            "products"
+        ]:  # Перебираем продукты в категории
+            product = Product(
+                product_data["name"],
+                product_data["description"],
+                product_data["price"],
+                product_data["quantity"],
+            )  # Создаем объект Product
 
-                category.products.append(product)  # Добавляем продукт в категорию
-            categories.append(category)  # Добавляем категорию в список категорий.
+            category.products.append(product)  # Добавляем продукт в категорию
+        categories.append(category)  # Добавляем категорию в список категорий.
     return categories
-
