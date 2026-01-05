@@ -1,0 +1,29 @@
+# Кэш и байт-код
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Виртуальные окружения
+venv/
+env/
+.venv/
+
+# Файлы сборки
+build/
+dist/
+*.egg-info/
+
+# Конфигурация и секреты
+.env
+*.log
+
+# macOS и Windows
+.DS_Store
+Thumbs.db
+
+# PyCharm
+.idea/
+
+# pytest
+.pytest_cache/
