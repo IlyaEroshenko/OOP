@@ -1,4 +1,6 @@
 import json
+import logging
+from typing import Optional
 
 
 class Product:
@@ -27,7 +29,9 @@ class Category:
     Представляет категорию товаров.
     """
 
-    def __init__(self, name: str, description: str):
+    def __init__(
+        self, name: str, description: str, products: Optional[list[Product]] = None
+    ):
         """
         Инициализирует новый объект Category.
 
@@ -37,7 +41,16 @@ class Category:
         """
         self.name = name
         self.description = description
-        self.products: list[Product] = []  # Список товаров в категории
+        self.products = (
+            products if products is not None else []
+        )  # Список товаров в категории
+        Category.category_count += 1  # Увеличиваем счетчик категорий
+        # Используем переданный список products, иначе создаем пустой.
+
+    category_count = 0
+
+    def product_count(self) -> int:
+        return len(self.products)
 
 
 def load_data_from_json(filename: str = "data/products.json") -> list[Category]:
@@ -54,31 +67,40 @@ def load_data_from_json(filename: str = "data/products.json") -> list[Category]:
     categories = []
     try:
         with open(filename, "r", encoding="utf-8") as f:
-            data = json.load(f)
+            data = json.load(f)  # Загружаем JSON данные из файла
     except FileNotFoundError:
-        print(f"Ошибка: Файл {filename} не найден.")
+        logging.error(f"Файл {filename} не найден.")
         return []  # Возвращаем пустой список в случае ошибки
-    except json.JSONDecodeError:
-        print(f"Ошибка: Некорректный формат JSON в файле {filename}.")
+    except json.JSONDecodeError as e:
+        logging.error(f"Ошибка: Некорректный формат JSON в файле {filename}: {e}")
         return []  # Возвращаем пустой список в случае ошибки
     except Exception as e:
-        print(f"Произошла неожиданная ошибка: {e}")
+        logging.error(f"Произошла неожиданная ошибка: {e}")
         return []
 
-    for category_data in data["categories"]:  # Перебираем категории
+    for category_data in data.get("categories", []):  # Перебираем категории
+        if "name" not in category_data or category_data.get(
+            "products", []
+        ):  # Перебираем продукты в категории
+            logging.warning("Пропущена категория с отсутствующими полями.")
+            continue
+
         category = Category(
             category_data["name"], category_data["description"]
         )  # Создаем объект Category
-        for product_data in category_data[
-            "products"
-        ]:  # Перебираем продукты в категории
-            product = Product(
-                product_data["name"],
-                product_data["description"],
-                product_data["price"],
-                product_data["quantity"],
-            )  # Создаем объект Product
+        for product_data in category_data.get(
+            "products", []
+        ):  # Перебираем продукты в категории
+            try:
+                product = Product(
+                    product_data["name"],
+                    product_data["description"],
+                    float(product_data["price"]),
+                    int(product_data["quantity"]),
+                )
 
-            category.products.append(product)  # Добавляем продукт в категорию
+                category.products.append(product)  # Добавляем продукт в категорию
+            except (KeyError, ValueError) as e:
+                logging.warning(f"Пропущен товар из-за ошибки: {e}")
         categories.append(category)  # Добавляем категорию в список категорий.
     return categories
