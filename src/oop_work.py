@@ -1,6 +1,10 @@
 import json
 import logging
-from typing import Optional
+from typing import Optional, List
+
+
+class Product:
+    pass
 
 
 class Product:
@@ -15,13 +19,83 @@ class Product:
         Args:
             name (str): Название товара.
             description (str): Описание товара.
-            price (float): Цена товара.
+            price (float): Цена товара (должна быть > 0).
             quantity (int): Количество товара в наличии.
         """
         self.name = name
         self.description = description
-        self.price = price
+        self._price = None  # Приватное поле для хранения цены
+        self.price = price  # Используем сеттер для валидации при инициализации
         self.quantity = quantity
+
+    @property
+    def price(self) -> float:
+        """
+        Геттер для атрибута price.
+
+        Returns:
+            float: Текущая цена товара.
+        """
+        return self._price
+
+    @price.setter
+    def price(self, value: float):
+        """
+        Сеттер для атрибута price с проверкой на положительность.
+
+        Args:
+            value (float): Новая цена товара.
+
+        Если цена ≤ 0, выводится сообщение:
+            "Цена не должна быть нулевая или отрицательная"
+        и значение НЕ обновляется.
+        """
+        if value <= 0:
+            print("Цена не должна быть нулевая или отрицательная")
+        else:
+            self._price = value
+
+    @classmethod
+    def new_product(cls, product_data: dict) -> Product:
+        """
+        Создаёт объект Product из словаря с данными.
+
+        Args:
+            product_data (dict): Словарь с ключами:
+                - 'name' (str)
+                - 'description' (str)
+                - 'price' (float или str)
+                - 'quantity' (int или str)
+
+        Returns:
+            Product: Новый экземпляр класса Product.
+
+        Raises:
+            ValueError: Если отсутствует обязательный ключ или данные некорректны.
+        """
+        try:
+            # Проверка обязательных ключей
+            if "name" not in product_data:
+                raise KeyError("name")
+            if "description" not in product_data:
+                raise KeyError("description")
+            if "price" not in product_data:
+                raise KeyError("price")
+            if "quantity" not in product_data:
+                raise KeyError("quantity")
+
+            name = product_data["name"]
+            description = product_data["description"]
+            price = float(product_data["price"])
+            quantity = int(product_data["quantity"])
+
+            return cls(name, description, price, quantity)
+
+        except KeyError as e:
+            raise ValueError(f"Отсутствует обязательный ключ в данных продукта: {e}")
+        except (ValueError, TypeError) as e:
+            raise ValueError(f"Некорректный тип данных для продукта: {e}")
+
 
 
 class Category:
@@ -29,78 +103,128 @@ class Category:
     Представляет категорию товаров.
     """
 
-    def __init__(
-        self, name: str, description: str, products: Optional[list[Product]] = None
-    ):
+    category_count = 0
+
+    def __init__(self, name: str, description: str, products: Optional[List[Product]] = None):
         """
         Инициализирует новый объект Category.
 
         Args:
             name (str): Название категории.
             description (str): Описание категории.
+            products (Optional[List[Product]]): Список товаров (по умолчанию — пустой).
         """
+        if not name:
+            raise ValueError("Название категории не может быть пустым")
+        if not description:
+            raise ValueError("Описание категории не может быть пустым")
+
         self.name = name
         self.description = description
-        self.products = (
-            products if products is not None else []
-        )  # Список товаров в категории
-        Category.category_count += 1  # Увеличиваем счетчик категорий
-        # Используем переданный список products, иначе создаем пустой.
+        self.__products = products if products is not None else []
+        Category.category_count += 1
 
-    category_count = 0
+    @property
+    def products(self) -> List[Product]:
+        """Публичный доступ к списку товаров."""
+        return self.__products
+
+    @products.setter
+    def products(self, value: List[Product]):
+        """Валидация при изменении списка товаров."""
+        if not all(isinstance(p, Product) for p in value):
+            raise TypeError("Все элементы должны быть типа Product")
+        self.__products = value
+
+    def add_product(self, product: Product) -> None:
+        """
+        Добавляет товар в категорию.
+
+        Args:
+            product (Product): Товар для добавления.
+
+        Raises:
+            TypeError: Если аргумент не является экземпляром Product.
+        """
+        if not isinstance(product, Product):
+            raise TypeError("В категорию можно добавлять только объекты типа Product")
+        self.__products.append(product)
 
     def product_count(self) -> int:
-        return len(self.products)
+        """
+        Возвращает количество товаров в категории.
+
+        Returns:
+            int: Число товаров.
+        """
+        return len(self.__products)
+
+    def get_products(self) -> List[str]:
+        """
+        Возвращает список товаров в формате строк.
+
+        Returns:
+            List[str]: Список строк вида "Название, Цена руб. Остаток: X шт."
+        """
+        return [
+            f"{p.name}, {p.price} руб. Остаток: {p.quantity} шт."
+            for p in self.__products
+        ]
 
 
-def load_data_from_json(filename: str = "data/products.json") -> list[Category]:
+
+def load_data_from_json(filename: str = "data/products.json") -> List[Category]:
     """
-    Функция для загрузки данных о категориях и товарах из JSON-файла,
-    обрабатывая возможные ошибки.
+    Загружает данные о категориях и товарах из JSON-файла.
 
     Args:
-        filename: Имя файла JSON (по умолчанию "products.json").
+        filename (str): Путь к JSON-файлу (по умолчанию "data/products.json").
 
     Returns:
-        list: Список объектов Category.
+        List[Category]: Список категорий с товарами.
+
+    Notes:
+        - Если файл не найден, возвращается пустой список.
+        - Пропускаются категории без имени или описания.
+        - Пропускаются товары с некорректными данными.
     """
     categories = []
+
     try:
         with open(filename, "r", encoding="utf-8") as f:
-            data = json.load(f)  # Загружаем JSON данные из файла
+            data = json.load(f)
     except FileNotFoundError:
         logging.error(f"Файл {filename} не найден.")
-        return []  # Возвращаем пустой список в случае ошибки
+        return []
     except json.JSONDecodeError as e:
-        logging.error(f"Ошибка: Некорректный формат JSON в файле {filename}: {e}")
-        return []  # Возвращаем пустой список в случае ошибки
+        logging.error(f"Ошибка формата JSON в файле {filename}: {e}")
+        return []
     except Exception as e:
-        logging.error(f"Произошла неожиданная ошибка: {e}")
+        logging.error(f"Неожиданная ошибка при чтении файла {filename}: {e}")
         return []
 
-    for category_data in data.get("categories", []):  # Перебираем категории
-        if "name" not in category_data or category_data.get(
-            "products", []
-        ):  # Перебираем продукты в категории
-            logging.warning("Пропущена категория с отсутствующими полями.")
+    for category_data in data.get("categories", []):
+        # Проверка обязательных полей категории
+        if not category_data.get("name"):
+            logging.warning("Пропущена категория без имени.")
+            continue
+        if not category_data.get("description"):
+            logging.warning("Пропущена категория без описания.")
             continue
 
         category = Category(
-            category_data["name"], category_data["description"]
-        )  # Создаем объект Category
-        for product_data in category_data.get(
-            "products", []
-        ):  # Перебираем продукты в категории
-            try:
-                product = Product(
-                    product_data["name"],
-                    product_data["description"],
-                    float(product_data["price"]),
-                    int(product_data["quantity"]),
-                )
+            name=category_data["name"],
+            description=category_data["description"]
+        )
 
-                category.products.append(product)  # Добавляем продукт в категорию
+        # Добавление товаров
+        for product_data in category_data.get("products", []):
+            try:
+                product = Product.new_product(product_data)
+                category.add_product(product)
             except (KeyError, ValueError) as e:
                 logging.warning(f"Пропущен товар из-за ошибки: {e}")
-        categories.append(category)  # Добавляем категорию в список категорий.
+
+        categories.append(category)
+
     return categories
