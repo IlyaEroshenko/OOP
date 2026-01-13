@@ -1,10 +1,8 @@
 import json
 import logging
-from typing import Optional, List
+from typing import List, Optional
 
-
-class Product:
-    pass
+logging.basicConfig(level=logging.INFO)
 
 
 class Product:
@@ -12,7 +10,9 @@ class Product:
     Представляет товар в магазине.
     """
 
-    def __init__(self, name: str, description: str, price: float, quantity: int):
+    def __init__(
+        self, name: str, description: str, price: float, quantity: int
+    ) -> None:
         """
         Инициализирует новый объект Product.
 
@@ -36,10 +36,12 @@ class Product:
         Returns:
             float: Текущая цена товара.
         """
+        if self._price is None:
+            raise ValueError("Цена не установлена")
         return self._price
 
     @price.setter
-    def price(self, value: float):
+    def price(self, value: float) -> None:
         """
         Сеттер для атрибута price с проверкой на положительность.
 
@@ -50,13 +52,14 @@ class Product:
             "Цена не должна быть нулевая или отрицательная"
         и значение НЕ обновляется.
         """
+        if not isinstance(value, (int, float)):
+            raise TypeError("Цена должна быть числом (int или float)")
         if value <= 0:
-            print("Цена не должна быть нулевая или отрицательная")
-        else:
-            self._price = value
+            raise ValueError("Цена не должна быть нулевая или отрицательная")
+        self._price = value
 
     @classmethod
-    def new_product(cls, product_data: dict) -> Product:
+    def new_product(cls, product_data: dict) -> None:
         """
         Создаёт объект Product из словаря с данными.
 
@@ -97,7 +100,6 @@ class Product:
             raise ValueError(f"Некорректный тип данных для продукта: {e}")
 
 
-
 class Category:
     """
     Представляет категорию товаров.
@@ -105,7 +107,9 @@ class Category:
 
     category_count = 0
 
-    def __init__(self, name: str, description: str, products: Optional[List[Product]] = None):
+    def __init__(
+        self, name: str, description: str, products: Optional[List[Product]] = None
+    ):
         """
         Инициализирует новый объект Category.
 
@@ -121,16 +125,16 @@ class Category:
 
         self.name = name
         self.description = description
-        self.__products = products if products is not None else []
+        self.__products = products or []
         Category.category_count += 1
 
     @property
-    def products(self) -> List[Product]:
+    def products(self) -> List["Product"]:
         """Публичный доступ к списку товаров."""
         return self.__products
 
     @products.setter
-    def products(self, value: List[Product]):
+    def products(self, value: List["Product"]) -> None:
         """Валидация при изменении списка товаров."""
         if not all(isinstance(p, Product) for p in value):
             raise TypeError("Все элементы должны быть типа Product")
@@ -170,7 +174,6 @@ class Category:
             f"{p.name}, {p.price} руб. Остаток: {p.quantity} шт."
             for p in self.__products
         ]
-
 
 
 def load_data_from_json(filename: str = "data/products.json") -> List[Category]:
@@ -213,8 +216,7 @@ def load_data_from_json(filename: str = "data/products.json") -> List[Category]:
             continue
 
         category = Category(
-            name=category_data["name"],
-            description=category_data["description"]
+            name=category_data["name"], description=category_data["description"]
         )
 
         # Добавление товаров
