@@ -25,7 +25,7 @@ class Product:
         self.name = name
         self.description = description
         self._price = None  # Приватное поле для хранения цены
-        self.price = price  # Используем сеттер для валидации при инициализации
+        self._price = _price  # Используем сеттер для валидации при инициализации
         self.quantity = quantity
 
     @property
@@ -129,9 +129,13 @@ class Category:
         Category.category_count += 1
 
     @property
-    def products(self) -> List["Product"]:
+    def products(self) -> List[str]:
         """Публичный доступ к списку товаров."""
-        return self.__products
+        product_strings = []  # Инициализируем пустой список для хранения строковых представлений товаров
+        for product in self.__products:  # Перебираем товары в категории
+            # Формируем строку по заданному шаблону и добавляем её в список
+            product_strings.append(f"{product.name}, {product.price} руб. Остаток: {product.quantity} шт.\n")
+        return product_strings  # Возвращаем сформированный список строк
 
     @products.setter
     def products(self, value: List["Product"]) -> None:
