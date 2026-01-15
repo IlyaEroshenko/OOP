@@ -25,7 +25,7 @@ class Product:
         self.name = name
         self.description = description
         self._price = None  # Приватное поле для хранения цены
-        self._price = _price  # Используем сеттер для валидации при инициализации
+        self._price = price  # Используем сеттер для валидации при инициализации
         self.quantity = quantity
 
     @property
