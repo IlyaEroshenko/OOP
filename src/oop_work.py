@@ -24,8 +24,7 @@ class Product:
         """
         self.name = name
         self.description = description
-        self._price = None  # Приватное поле для хранения цены
-        self._price = price  # Используем сеттер для валидации при инициализации
+        self.price = price  # Используем сеттер
         self.quantity = quantity
 
     @property
@@ -54,8 +53,8 @@ class Product:
         """
         if not isinstance(value, (int, float)):
             raise TypeError("Цена должна быть числом (int или float)")
-        if value <= 0:
-            raise ValueError("Цена не должна быть нулевая или отрицательная")
+        if value < 0:
+            raise ValueError("Цена не должна быть отрицательная")
         self._price = value
 
     @classmethod
