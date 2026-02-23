@@ -58,7 +58,7 @@ class Product:
         self._price = value
 
     @classmethod
-    def new_product(cls, product_data: dict) -> Product:
+    def new_product(cls, product_data: dict) -> "Product":
         """
         Создаёт объект Product из словаря с данными.
 
