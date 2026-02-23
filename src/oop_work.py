@@ -53,12 +53,12 @@ class Product:
         """
         if not isinstance(value, (int, float)):
             raise TypeError("Цена должна быть числом (int или float)")
-        if value < 0:
+        if value <= 0:
             raise ValueError("Цена не должна быть отрицательная")
         self._price = value
 
     @classmethod
-    def new_product(cls, product_data: dict) -> None:
+    def new_product(cls, product_data: dict) -> Product:
         """
         Создаёт объект Product из словаря с данными.
 
@@ -130,10 +130,14 @@ class Category:
     @property
     def products(self) -> List[str]:
         """Публичный доступ к списку товаров."""
-        product_strings = []  # Инициализируем пустой список для хранения строковых представлений товаров
+        product_strings = (
+            []
+        )  # Инициализируем пустой список для хранения строковых представлений товаров
         for product in self.__products:  # Перебираем товары в категории
             # Формируем строку по заданному шаблону и добавляем её в список
-            product_strings.append(f"{product.name}, {product.price} руб. Остаток: {product.quantity} шт.\n")
+            product_strings.append(
+                f"{product.name}, {product.price} руб. Остаток: {product.quantity} шт.\n"
+            )
         return product_strings  # Возвращаем сформированный список строк
 
     @products.setter
